@@ -1,3 +1,4 @@
+
 from flask import Flask, jsonify, request, Response
 import boto3
 import os
@@ -38,5 +39,19 @@ def upload():
 
         return jsonify({"message": f"Uploaded {file.filename} to R2."}), 200
 
-    except Exc
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/list", methods=["GET"])
+def list_files():
+    try:
+        client = get_r2_client()
+        bucket = os.getenv("R2_BUCKET_NAME")
+        response = client.list_objects_v2(Bucket=bucket)
+
+        files = [obj["Key"] for obj in response.get("Contents", [])]
+        return jsonify({"files": files}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
