@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import os
 import boto3
+import traceback
 
 app = Flask(__name__)
 
@@ -22,15 +23,18 @@ def upload():
     if not file:
         return jsonify({"error": "No file provided"}), 400
 
-    client = boto3.client(
-        's3',
-        endpoint_url=f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
-        aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY")
-    )
+    try:
+        client = boto3.client(
+            's3',
+            endpoint_url=f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+            aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY")
+        )
 
-    bucket = os.getenv("R2_BUCKET_NAME")
-    client.upload_fileobj(file, bucket, file.filename)
+        bucket = os.getenv("R2_BUCKET_NAME")
+        client.upload_fileobj(file, bucket, file.filename)
 
-    return jsonify({"message": f"Uploaded {file.filename} to R2."}), 200
-
+        return jsonify({"message": f"Uploaded {file.filename} to R2."}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
