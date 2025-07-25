@@ -1,8 +1,8 @@
-
-from flask import Flask, jsonify, request, Response
+from flask import Flask, jsonify, request, Response, send_file
 import boto3
 import os
 from botocore.exceptions import BotoCoreError, ClientError
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -12,15 +12,16 @@ def index():
 
 @app.route("/status")
 def status():
-    return {
+    return jsonify({
         "R2_ACCESS_KEY_ID": os.getenv("R2_ACCESS_KEY_ID", "Not Set"),
         "R2_BUCKET_NAME": os.getenv("R2_BUCKET_NAME", "Not Set"),
-        "env": os.getenv("FLASK_ENV", "Not Set")
-    }
+        "R2_ACCOUNT_ID": os.getenv("R2_ACCOUNT_ID", "Not Set"),
+        "FLASK_ENV": os.getenv("FLASK_ENV", "Not Set")
+    })
 
 def get_r2_client():
     return boto3.client(
-        's3',
+        "s3",
         endpoint_url=f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
         aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY")
@@ -55,3 +56,5 @@ def list_files():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/download", methods=["GET"])
+def downloa
